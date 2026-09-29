@@ -280,6 +280,7 @@ def _config_summary() -> dict:
         "general": {
             "timezone": prefs.get("timezone"),
             "late_entry_until": prefs.late_entry_until().strftime("%H:%M"),
+            "workdays": sorted(prefs.workdays()),
             "morning_reminder": prefs.get("morning_reminder"),
             "evening_reminder": prefs.get("evening_reminder"),
         },
@@ -455,6 +456,7 @@ class GeneralConfig(BaseModel):
     late_entry_until: str
     morning_reminder: str = ""  # empty = off
     evening_reminder: str = ""
+    workdays: list[int] | None = None   # Monday = 0; None = leave unchanged
 
 
 @app.put("/api/config/general", dependencies=[logged_in])
@@ -473,6 +475,8 @@ def save_general(body: GeneralConfig):
     prefs.put("late_entry_until", body.late_entry_until)
     prefs.put("morning_reminder", body.morning_reminder)
     prefs.put("evening_reminder", body.evening_reminder)
+    if body.workdays is not None:
+        prefs.put("workdays", ",".join(str(d) for d in sorted(set(body.workdays)) if 0 <= d <= 6))
     return _config_summary()
 
 

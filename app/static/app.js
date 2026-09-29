@@ -873,6 +873,12 @@ function generalSection(g) {
       <label class="field">Time zone
         <select name="timezone">${zones.map((z) => `<option ${z === g.timezone ? "selected" : ""}>${esc(z)}</option>`).join("")}</select>
       </label>
+      <div class="field">Your workdays
+        <div class="day-picks">${["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((name, i) => `
+          <label class="day-pick"><input type="checkbox" name="workday" value="${i}" ${g.workdays.includes(i) ? "checked" : ""}><span>${name}</span></label>`).join("")}
+        </div>
+        <span class="hint">Things you get done after work on these days earn extra credit.</span>
+      </div>
       <label class="field">Yesterday can still be logged until
         <input type="time" name="late_entry_until" value="${esc(g.late_entry_until)}" required>
       </label>
@@ -1119,6 +1125,7 @@ function renderSettings() {
     await put("/api/config/general", {
       timezone: f.get("timezone"),
       late_entry_until: f.get("late_entry_until"),
+      workdays: f.getAll("workday").map(Number),
       morning_reminder: f.get("morning_reminder") ?? "",   // disabled inputs aren't submitted = off
       evening_reminder: f.get("evening_reminder") ?? "",
     });

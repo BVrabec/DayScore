@@ -639,3 +639,19 @@ a.icon-btn:hover { text-decoration: none; }
 }
 .topbar .wrap > .icon-btn + .icon-btn { margin-left: -8px; }  /* keep the two round buttons close together */
 @media (max-width: 560px) { .topbar .wrap > .icon-btn + .icon-btn { margin-left: 0; } }
+
+/* Workday picker */
+.day-picks { display: flex; flex-wrap: wrap; gap: 6px; }
+.day-pick { cursor: pointer; }
+.day-pick input { position: absolute; opacity: 0; pointer-events: none; }
+.day-pick span {
+  display: inline-block; min-width: 48px; text-align: center; padding: 7px 10px; border-radius: 10px;
+  border: 1px solid var(--border); background: var(--page); color: var(--text-2); font-size: 13px; font-weight: 600;
+  transition: background .2s, color .2s, box-shadow .2s;
+}
+.day-pick input:checked + span {
+  color: #fff; border-color: transparent; background: linear-gradient(135deg, var(--btn1), var(--btn2));
+  box-shadow: 0 4px 14px -6px var(--glow);
+}
+.day-pick input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+.field .day-picks + .hint { font-weight: 400; }

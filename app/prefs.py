@@ -27,6 +27,7 @@ DEFAULTS = {
     "telegram_link_code": (None, ""),
     "timezone": ("TZ", "UTC"),
     "late_entry_until": ("LATE_ENTRY_UNTIL", "12:00"),
+    "workdays": ("WORKDAYS", "0,1,2,3,4"),                    # Monday = 0 ... Sunday = 6
     "morning_reminder": ("MORNING_REMINDER", "09:00"),
     "evening_reminder": ("EVENING_REMINDER", "21:30"),
 }
@@ -79,6 +80,11 @@ def tz() -> ZoneInfo:
         return ZoneInfo(get("timezone") or "UTC")
     except Exception:
         return ZoneInfo("UTC")
+
+
+def workdays() -> set[int]:
+    """Weekday numbers (Monday = 0) the person works at their job."""
+    return {int(d) for d in get("workdays").split(",") if d.strip().isdigit() and 0 <= int(d) <= 6}
 
 
 def late_entry_until() -> time:

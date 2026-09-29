@@ -38,7 +38,7 @@ class DayScore(BaseModel):
 
 
 SYSTEM_PROMPT = """You score how productive someone's day was, from 0 to 100, based on their own short \
-end-of-day note. The note may be written in Slovenian, English or a mix. Always answer in English.
+end-of-day note. The note may be written in any language (or a mix). Always answer in English.
 
 How to score:
 - Judge effort and follow-through, not just the number of items. Hard, boring or long tasks count \
@@ -47,8 +47,17 @@ for more than quick ones. Finishing something counts for more than starting it.
 fixing things around the house or home server, chores, errands, exercise, cooking, helping someone.
 - Intentional rest, sleep and time with people are healthy, not failures. A deliberate rest day can \
 still score 50-65. Hours lost to doomscrolling, bingeing or avoiding tasks pull the score down.
+- Depth beats quantity: one long, focused session on something meaningful (building a project, \
+studying, creating) can make a very productive day on its own. Never lower the score just \
+because the list is short.
+- Workdays: the <day> tag says whether it was a workday. On a workday their job already takes \
+most of the day, so productive things done after work (side projects, learning, chores, sport) \
+take extra effort and deserve extra credit, and less volume is expected than on a free day. \
+On free days expect a bit more. If they describe their job work, count it as solid work.
 - If the person mentions they were sick, travelling or had a hard day, judge against what was \
 realistic that day.
+- If <personal_priorities> is given, follow it: it says what counts for this person and wins \
+over the general guidance where they differ.
 - Be consistent: similar days must get similar scores. Use the recent days listed below as your \
 calibration anchor. Do not inflate. Most ordinary days land between 45 and 75.
 
@@ -171,14 +180,21 @@ def _build_prompt(day: date, text: str, tasks_block: str = "") -> str:
     if priorities:
         parts.append(f"<personal_priorities>\n{priorities}\n</personal_priorities>")
 
+    workdays = prefs.workdays()
+    kind = lambda d: "workday" if d.weekday() in workdays else "free day"
+
     recent = db.recent_entries(before=day, limit=14)
     if recent:
-        lines = [f"{e['day']}: {e['score']} - {e['title']} ({e['summary']})" for e in recent]
+        lines = []
+        for e in recent:
+            d = date.fromisoformat(e["day"])
+            lines.append(f"{e['day']} ({d:%a}, {kind(d)}): {e['score']} - {e['title']} ({e['summary']})")
         parts.append("<recent_days>\n" + "\n".join(lines) + "\n</recent_days>")
 
     if tasks_block:
         parts.append(tasks_block)
-    parts.append(f"<day date=\"{day.isoformat()}\" weekday=\"{day:%A}\">\n{text}\n</day>")
+    workday = "yes" if day.weekday() in workdays else "no"
+    parts.append(f"<day date=\"{day.isoformat()}\" weekday=\"{day:%A}\" workday=\"{workday}\">\n{text}\n</day>")
     return "\n\n".join(parts)
 
 

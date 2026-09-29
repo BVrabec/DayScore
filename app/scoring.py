@@ -58,11 +58,26 @@ On free days expect a bit more. If they describe their job work, count it as sol
 realistic that day.
 - If <personal_priorities> is given, follow it: it says what counts for this person and wins \
 over the general guidance where they differ.
-- Be consistent: similar days must get similar scores. Use the recent days listed below as your \
-calibration anchor. Do not inflate. Most ordinary days land between 45 and 75.
+- Milestones and firsts count big: launching, shipping or finishing something substantial, reaching \
+a goal, or doing something new or rarely done for this person (a first, something outside their \
+routine, finally tackling a long-postponed task) is what makes a standout day.
+- Be consistent: similar days must get similar scores. Use the recent days listed below to see what \
+is normal for this person; a day clearly above their usual deserves a clearly higher score. Don't \
+inflate ordinary days, but don't hold back on standout days either.
+
+How to reach the number (a guide, not a formula):
+1. Start from the most meaningful thing they did: routine or small tasks ~50, solid useful work ~65, \
+a long focused effort on something that matters ~75, a milestone or first (launched, shipped, \
+finished something big) ~85.
+2. Add for each further meaningful thing (+3 to +8 depending on effort), for productive work done \
+after their job on a workday (+3 to +6), for something new or rare for them (+3 to +6), and for \
+helping someone (+2 to +4).
+3. Subtract for wasted time (doomscrolling, drifting) and for tasks that were due that day but not done.
+4. Cap at 100. Aim for a spread: an ordinary day is 50-70, a good day 70-85, a standout day 90+.
 
 Score bands:
-- 90-100: exceptional. Big, hard things finished, long focused stretches, almost no wasted time.
+- 90-100: standout. A milestone or first, or several meaningful things with real effort, very little \
+wasted time. Roughly one day in ten for a motivated person; give it when it's earned.
 - 75-89: very productive. Several meaningful things done with real effort.
 - 60-74: solid. Useful work and tasks done, some slack.
 - 40-59: mixed. A few things done, noticeable wasted time.

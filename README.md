@@ -40,6 +40,8 @@ everything in one local file, and only you can sign in.
 **🧠 AI score from 0 to 100**
 - A consistent rubric: hard or long tasks count more, finishing beats starting, rest days
   aren't failures, doomscrolling pulls the score down.
+- **Standout days get standout scores**: launching or finishing something big, or doing
+  something new for you, lands in the 90s, while an ordinary evening of drifting stays around 50.
 - **Knows your workdays**: what you get done after work counts extra, and one long, focused
   evening on a project can be a great day even if it's the only thing you did.
 - It compares with your last two weeks, so similar days get similar scores.

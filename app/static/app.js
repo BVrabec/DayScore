@@ -286,6 +286,14 @@ function drawCharts() {
   }
 }
 
+function rescoreNote(entry) {
+  const r = lastRescore;
+  if (!entry || !r || r.day !== entry.day) return "";
+  const text = r.to === r.from ? `Re-scored with your addition: still ${r.to}`
+    : `Re-scored with your addition: ${r.from} → ${r.to}`;
+  return `<div class="rescore">${r.to > r.from ? "▲" : r.to < r.from ? "▼" : "↻"} ${text}</div>`;
+}
+
 function renderTodayCard() {
   const el = $("#today-card");
   const days = S.loggable_days;
@@ -325,6 +333,7 @@ function renderTodayCard() {
       ${seg}
     </div>
     ${warn}
+    ${rescoreNote(entry)}
     ${entry
       ? `${entryResult(entry, true)}
          <div class="add-more"><button class="btn ghost small" id="add-more-btn" type="button">+ Add something</button></div>
@@ -342,6 +351,8 @@ function renderTodayCard() {
   f.text.onkeydown = (e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); submitNote(f); } };
 }
 
+let lastRescore = null;
+
 async function submitNote(form) {
   const text = form.text.value.trim();
   if (!text) return;
@@ -351,7 +362,10 @@ async function submitNote(form) {
   btn.disabled = true; form.text.disabled = true; err.hidden = true;
   btn.innerHTML = '<span class="spinner"></span> Scoring…';
   try {
-    await api("/api/entries", { method: "POST", body: JSON.stringify({ day: selectedDay, text }) });
+    const res = await api("/api/entries", { method: "POST", body: JSON.stringify({ day: selectedDay, text }) });
+    // After adding to an already scored day, show how the score moved.
+    lastRescore = res.previous_score == null ? null
+      : { day: res.entry.day, from: res.previous_score, to: res.entry.score };
     await load();
     render();
   } catch (e) {

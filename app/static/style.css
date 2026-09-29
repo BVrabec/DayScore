@@ -655,3 +655,9 @@ a.icon-btn:hover { text-decoration: none; }
 }
 .day-pick input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
 .field .day-picks + .hint { font-weight: 400; }
+
+/* "Re-scored: 92 → 96" after adding to a day */
+.rescore {
+  display: inline-block; margin-bottom: 14px; padding: 6px 12px; border-radius: 999px;
+  font-size: 13px; font-weight: 600; color: var(--accent); background: var(--accent-wash);
+}

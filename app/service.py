@@ -64,7 +64,7 @@ async def log_day(day: date, text: str, source: str) -> tuple[dict, int | None]:
             log.warning("Scoring without Todoist: %s", e)
     block = todoist.prompt_block(day, tasks) if tasks else ""
 
-    result = await scoring.score_day(day, full_text, block)
+    result = await scoring.score_day(day, full_text, block, existing["score"] if existing else None)
     entry = db.save_entry(day, full_text, result, scoring.current_model(), source)
     if tasks:
         await todoist.close_matched(day, result.get("completed_task_ids", []), tasks)

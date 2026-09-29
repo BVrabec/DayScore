@@ -74,10 +74,16 @@ after their job on a workday (+3 to +6), for something new or rare for them (+3 
 helping someone (+2 to +4).
 3. Subtract for wasted time (doomscrolling, drifting) and for tasks that were due that day but not done.
 4. Cap at 100. Aim for a spread: an ordinary day is 50-70, a good day 70-85, a standout day 90+.
+5. If <earlier_score> is given, the person added more to a day you already scored. Score the whole \
+day again: productive additions should raise the score (about +2 to +6 each, up to 100), rest or \
+leisure additions (a movie, gaming, relaxing) leave it about the same, and only additions that \
+reveal wasted time or problems lower it.
 
 Score bands:
-- 90-100: standout. A milestone or first, or several meaningful things with real effort, very little \
-wasted time. Roughly one day in ten for a motivated person; give it when it's earned.
+- 95-100: exceptional. Several milestones or big accomplishments in one day, lots of focused effort, \
+no wasted time. Rare, but give it when it's earned.
+- 90-94: standout. A milestone or first, or several meaningful things with real effort, very little \
+wasted time. Roughly one day in ten for a motivated person.
 - 75-89: very productive. Several meaningful things done with real effort.
 - 60-74: solid. Useful work and tasks done, some slack.
 - 40-59: mixed. A few things done, noticeable wasted time.
@@ -189,7 +195,7 @@ async def check_api_key(provider: str, key: str) -> None:
         raise ScoringError("Couldn't reach the AI provider. Check the server's internet connection.") from e
 
 
-def _build_prompt(day: date, text: str, tasks_block: str = "") -> str:
+def _build_prompt(day: date, text: str, tasks_block: str = "", earlier_score: int | None = None) -> str:
     parts = []
     priorities = db.get_setting("priorities", "").strip()
     if priorities:
@@ -208,6 +214,8 @@ def _build_prompt(day: date, text: str, tasks_block: str = "") -> str:
 
     if tasks_block:
         parts.append(tasks_block)
+    if earlier_score is not None:
+        parts.append(f"<earlier_score>{earlier_score} (before the latest addition to this day's note)</earlier_score>")
     workday = "yes" if day.weekday() in workdays else "no"
     parts.append(f"<day date=\"{day.isoformat()}\" weekday=\"{day:%A}\" workday=\"{workday}\">\n{text}\n</day>")
     return "\n\n".join(parts)
@@ -301,8 +309,8 @@ async def _score_openrouter(prompt: str) -> DayScore:
         raise ScoringError("The AI returned an answer that couldn't be read. Try again, or pick another model.") from e
 
 
-async def score_day(day: date, text: str, tasks_block: str = "") -> dict:
-    prompt = _build_prompt(day, text, tasks_block)
+async def score_day(day: date, text: str, tasks_block: str = "", earlier_score: int | None = None) -> dict:
+    prompt = _build_prompt(day, text, tasks_block, earlier_score)
     if prefs.get("ai_provider") == "openrouter":
         result = await _score_openrouter(prompt)
     else:

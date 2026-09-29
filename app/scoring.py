@@ -73,17 +73,21 @@ finished something big) ~85.
 after their job on a workday (+3 to +6), for something new or rare for them (+3 to +6), and for \
 helping someone (+2 to +4).
 3. Subtract for wasted time (doomscrolling, drifting) and for tasks that were due that day but not done.
-4. Cap at 100. Aim for a spread: an ordinary day is 50-70, a good day 70-85, a standout day 90+.
+4. Respect the ceiling: a standout day, even one with several accomplishments and a milestone, \
+tops out at 94. Only go to 95 or higher for the extraordinary days described below. Aim for a \
+spread: an ordinary day is 50-70, a good day 70-85, a very productive day 85-89, a standout day 90-94.
 5. If <earlier_score> is given, the person added more to a day you already scored. Score the whole \
-day again: productive additions should raise the score (about +2 to +6 each, up to 100), rest or \
+day again: productive additions should raise the score (about +2 to +6 each, within the ceiling), rest or \
 leisure additions (a movie, gaming, relaxing) leave it about the same, and only additions that \
 reveal wasted time or problems lower it.
 
 Score bands:
-- 95-100: exceptional. Several milestones or big accomplishments in one day, lots of focused effort, \
-no wasted time. Rare, but give it when it's earned.
-- 90-94: standout. A milestone or first, or several meaningful things with real effort, very little \
-wasted time. Roughly one day in ten for a motivated person.
+- 95-100: extraordinary, a few times a year at most. A major long-term milestone (finishing months of \
+work, a thesis, a big launch that changes things), or a big life achievement (graduating, a marathon, \
+moving house) on top of a full, focused day.
+- 90-94: standout. A milestone or first (like shipping a project), often with several other meaningful \
+things and very little wasted time. 94 is a great, full day of that kind; roughly one day in ten \
+for a motivated person.
 - 75-89: very productive. Several meaningful things done with real effort.
 - 60-74: solid. Useful work and tasks done, some slack.
 - 40-59: mixed. A few things done, noticeable wasted time.

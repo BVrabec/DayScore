@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#0c0a10">
+  <title>DayScore</title>
+  <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+  <link rel="manifest" href="/static/manifest.webmanifest">
+  <link rel="stylesheet" href="/static/style.css">
+  <script>
+    (() => { let t = "dark"; try { t = localStorage.getItem("theme") || "dark"; } catch {} document.documentElement.dataset.theme = t; })();
+  </script>
+</head>
+<body>
+  <div class="aurora" aria-hidden="true"><i></i><i></i></div>
+  <div class="login-page">
+    <div class="card login-card">
+      <div class="brand"><img src="/static/icon.svg" alt="" width="34" height="34"> <span class="app-name">DayScore</span></div>
+      <p id="intro">Your private productivity journal</p>
+
+      <!-- step 1: password (or create one on first visit) -->
+      <form id="pw-step" hidden>
+        <input type="password" name="password" placeholder="Password" autocomplete="current-password" required>
+        <input type="password" name="confirm" placeholder="Repeat password" autocomplete="new-password" hidden>
+        <button class="btn" type="submit">Log in</button>
+      </form>
+
+      <!-- step 2: second factor -->
+      <div id="mfa-step" hidden>
+        <form id="totp-step" hidden>
+          <input name="code" placeholder="6-digit code" inputmode="numeric" autocomplete="one-time-code" maxlength="7" required>
+          <button class="btn" type="submit">Verify</button>
+        </form>
+        <form id="recovery-step" hidden>
+          <input name="code" placeholder="Recovery code (xxxx-xxxx)" autocomplete="off" spellcheck="false" required>
+          <button class="btn" type="submit">Use recovery code</button>
+        </form>
+        <button class="linkish" type="button" id="use-recovery">Use a recovery code instead</button>
+      </div>
+
+      <div class="error" id="error" hidden></div>
+    </div>
+  </div>
+  <script>
+    const $ = (s) => document.querySelector(s);
+    const err = $("#error");
+    const pw = $("#pw-step");
+    let setup = false;
+
+    const showError = (text) => { err.textContent = text; err.hidden = !text; };
+    async function post(url, body) {
+      const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.detail || "Something went wrong.");
+      return data;
+    }
+    const done = () => { location.href = setup ? "/#/settings" : "/"; };
+
+    // A button that shows progress and errors while `fn` runs.
+    function busy(el, fn) {
+      return async (e) => {
+        e.preventDefault();
+        const btn = el.tagName === "FORM" ? el.querySelector("button[type=submit]") : el;
+        btn.disabled = true; showError("");
+        try { await fn(); } catch (x) { showError(x.message); } finally { btn.disabled = false; }
+      };
+    }
+
+    fetch("/api/auth").then((r) => r.json()).then((s) => {
+      document.querySelectorAll(".app-name").forEach((n) => { n.textContent = s.app_name; });
+      setup = s.setup_needed;
+      if (setup) {
+        $("#intro").textContent = "Welcome! Create a password to keep your journal private.";
+        pw.password.placeholder = "New password (at least 8 characters)";
+        pw.password.autocomplete = "new-password";
+        pw.confirm.hidden = false;
+        pw.confirm.required = true;
+        pw.querySelector("button[type=submit]").textContent = "Create password";
+      }
+      pw.hidden = false;
+      pw.password.focus();
+    });
+
+    pw.addEventListener("submit", busy(pw, async () => {
+      if (setup && pw.password.value !== pw.confirm.value) throw new Error("The passwords don't match.");
+      const data = await post(setup ? "/api/setup" : "/api/login", { password: pw.password.value });
+      if (!data.second_factor) return done();
+      // Password was right: show the code step.
+      pw.hidden = true;
+      $("#intro").textContent = "Enter the code from your authenticator app.";
+      $("#mfa-step").hidden = false;
+      $("#totp-step").hidden = false;
+      $("#totp-step").code.focus();
+    }));
+
+
+    const totp = $("#totp-step");
+    totp.addEventListener("submit", busy(totp, async () => { await post("/api/login/totp", { code: totp.code.value }); done(); }));
+    const recovery = $("#recovery-step");
+    recovery.addEventListener("submit", busy(recovery, async () => { await post("/api/login/recovery", { code: recovery.code.value }); done(); }));
+    $("#use-recovery").addEventListener("click", () => {
+      recovery.hidden = false; $("#use-recovery").hidden = true; recovery.code.focus();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,22 @@
+name: Bug report
+description: Something doesn't work as expected
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you do, what did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: input
+    id: setup
+    attributes:
+      label: How do you run DayScore?
+      placeholder: e.g. Proxmox LXC with Debian 13 + Docker, 1 core / 1 GB
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Relevant lines from `docker compose logs`. Please remove API keys, tokens and anything personal.
+      render: text

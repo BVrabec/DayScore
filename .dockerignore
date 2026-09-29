@@ -1,0 +1,10 @@
+.env
+data/
+.venv/
+.git/
+__pycache__/
+*.pyc
+NOTES.md
+demo-data/
+scripts/__pycache__/
+.deploy-host

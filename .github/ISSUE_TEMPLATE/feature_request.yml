@@ -1,0 +1,11 @@
+name: Feature idea
+description: Suggest something new or better
+labels: [enhancement]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: Your idea
+      description: What would you like DayScore to do, and why would it help you?
+    validations:
+      required: true

@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#0c0a10">
+  <title>DayScore</title>
+  <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+  <link rel="manifest" href="/static/manifest.webmanifest">
+  <link rel="stylesheet" href="/static/style.css">
+  <script>
+    (() => { let t = "dark"; try { t = localStorage.getItem("theme") || "dark"; } catch {} document.documentElement.dataset.theme = t; })();
+  </script>
+</head>
+<body>
+  <div class="aurora" aria-hidden="true"><i></i><i></i></div>
+  <header class="topbar">
+    <div class="wrap">
+      <a class="brand" href="#/" style="color:inherit;text-decoration:none">
+        <img src="/static/icon.svg" alt="" width="26" height="26"><span id="app-name">DayScore</span>
+      </a>
+      <nav class="tabs">
+        <a href="#/" data-route="">Today</a>
+        <a href="#/insights" data-route="insights">Insights</a>
+        <a href="#/history" data-route="history">History</a>
+      </nav>
+      <button class="icon-btn" id="theme-btn" title="Switch theme" aria-label="Switch theme"></button>
+      <a class="icon-btn" id="settings-btn" href="#/settings" data-route="settings" title="Settings" aria-label="Settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+      </a>
+    </div>
+  </header>
+
+  <main class="wrap" id="view" aria-live="polite"></main>
+
+  <dialog id="day-dialog">
+    <button class="icon-btn dialog-close" id="dialog-close" aria-label="Close">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+    <div class="dialog-body" id="dialog-body"></div>
+  </dialog>
+
+  <div class="tooltip" id="tooltip" hidden></div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

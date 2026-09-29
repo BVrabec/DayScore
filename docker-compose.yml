@@ -1,0 +1,15 @@
+services:
+  dayscore:
+    build: .
+    restart: unless-stopped
+    ports:
+      # Change the port with DAYSCORE_PORT=8080 docker compose up -d
+      - "${DAYSCORE_PORT:-8000}:8000"
+    volumes:
+      - dayscore-data:/data
+    # Everything is set up in the browser (password, AI key, Telegram, Todoist).
+    # Optionally preset values with a .env file; see .env.example.
+    # env_file: .env
+
+volumes:
+  dayscore-data:

@@ -1,0 +1,11 @@
+{
+  "name": "DayScore",
+  "short_name": "DayScore",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0c0a10",
+  "theme_color": "#0c0a10",
+  "icons": [
+    { "src": "/static/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

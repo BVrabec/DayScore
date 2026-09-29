@@ -4,13 +4,13 @@ Thanks for your interest! Every kind of help is welcome: ideas, bug reports, doc
 
 ## Ideas and questions
 
-[Start a discussion](https://github.com/BVrabec/dayscore/discussions). Describe what you'd
+[Start a discussion](https://github.com/BVrabec/DayScore/discussions). Describe what you'd
 like to do and why; small, concrete ideas are the easiest to pick up. The current plans are
 in the [Roadmap](README.md#roadmap).
 
 ## Bugs
 
-[Open an issue](https://github.com/BVrabec/dayscore/issues/new/choose) with:
+[Open an issue](https://github.com/BVrabec/DayScore/issues/new/choose) with:
 - what you did, what you expected, and what happened instead
 - how you run DayScore (LXC, VM, Raspberry Pi…) and your version (`git log -1 --oneline`)
 - the relevant lines from `docker compose logs`

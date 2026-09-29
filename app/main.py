@@ -47,6 +47,17 @@ app.mount("/static", StaticFiles(directory=STATIC), name="static")
 logged_in = Depends(auth.require_login)
 
 
+@app.middleware("http")
+async def security_headers(request: Request, call_next):
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["Referrer-Policy"] = "no-referrer"
+    response.headers["X-Frame-Options"] = "DENY"                         # no embedding in other sites
+    response.headers["Content-Security-Policy"] = "frame-ancestors 'none'"
+    response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+    return response
+
+
 def _versioned(html: str) -> str:
     """Add ?v=<file mtime> to asset URLs so browsers never run a stale app.js/style.css."""
     for name in ("app.js", "style.css"):
@@ -478,10 +489,16 @@ def export(fmt: str):
         buf = io.StringIO()
         writer = csv.writer(buf)
         writer.writerow(["day", "score", "title", "summary", "activities", "reason", "tip", "raw_text"])
+        def cell(value):
+            # A leading = + - @ would run as a formula in Excel; prefix it so it stays text.
+            text = str(value)
+            return "'" + text if text[:1] in ("=", "+", "-", "@", "\t", "\r") else text
+
         for e in entries:
-            writer.writerow([e["day"], e["score"], e["title"], e["summary"],
-                             "; ".join(f"{a['text']} ({a['category']})" for a in e["activities"]),
-                             e["reason"], e["tip"], e["raw_text"]])
+            writer.writerow([cell(v) for v in (
+                e["day"], e["score"], e["title"], e["summary"],
+                "; ".join(f"{a['text']} ({a['category']})" for a in e["activities"]),
+                e["reason"], e["tip"], e["raw_text"])])
         body, media = buf.getvalue(), "text/csv"
     else:
         raise HTTPException(404)

@@ -40,8 +40,12 @@ def client_ip(request: Request) -> str:
 
 def check_lock(request: Request) -> None:
     ip = client_ip(request)
-    recent = [t for t in _failures.get(ip, []) if t > time.time() - LOCK_SECONDS]
-    _failures[ip] = recent
+    cutoff = time.time() - LOCK_SECONDS
+    for other in [k for k, times in _failures.items() if not times or times[-1] < cutoff]:
+        del _failures[other]   # forget addresses with no recent failures
+    recent = [t for t in _failures.get(ip, []) if t > cutoff]
+    if recent:
+        _failures[ip] = recent
     if len(recent) >= MAX_FAILURES:
         minutes = int((recent[0] + LOCK_SECONDS - time.time()) // 60) + 1
         raise HTTPException(429, f"Too many failed attempts. Try again in {minutes} minute{'s' if minutes != 1 else ''}.")

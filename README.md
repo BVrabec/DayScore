@@ -90,8 +90,8 @@ the official guide for [Debian](https://docs.docker.com/engine/install/debian/) 
 
 ```bash
 sudo apt install -y git          # if Git isn't installed yet
-git clone https://github.com/BVrabec/dayscore.git
-cd dayscore
+git clone https://github.com/BVrabec/DayScore.git
+cd DayScore
 docker compose up -d             # builds and starts DayScore (the first time takes a minute or two)
 ```
 
@@ -114,7 +114,7 @@ That's it. Write your first day on the **Today** page or send your bot a message
 
 ### Useful commands
 
-Run these in the `dayscore` folder:
+Run these in the `DayScore` folder:
 
 | What | Command |
 |---|---|
@@ -122,7 +122,6 @@ Run these in the `dayscore` folder:
 | See the logs | `docker compose logs -f` |
 | Stop / start | `docker compose stop` / `docker compose start` |
 | Use a different port | `DAYSCORE_PORT=8080 docker compose up -d` |
-| Back up the database | `docker compose exec dayscore python -m scripts.backup` |
 | Turn off 2FA if locked out | `docker compose exec dayscore python -m scripts.reset_2fa` |
 
 ## System requirements
@@ -155,24 +154,6 @@ DayScore always asks for your password. On top of that:
   (Caddy, Nginx Proxy Manager, Traefik). When served over HTTPS, set `SECURE_COOKIES=true`.
 - The Telegram bot doesn't need any open ports: it connects out to Telegram itself.
 
-## Backups
-
-Everything (your days, settings and keys) lives in one SQLite database inside the
-`dayscore-data` Docker volume.
-
-```bash
-# make a backup (safe while DayScore is running) and copy it out of the container
-docker compose exec dayscore python -m scripts.backup
-docker compose cp dayscore:/data/backups ./dayscore-backups
-
-# restore one
-docker compose cp ./dayscore-backups/dayscore-<date>.db dayscore:/data/restore.db
-docker compose exec dayscore python -m scripts.restore /data/restore.db
-docker compose restart dayscore
-```
-
-You can also download everything as CSV or JSON in **Settings → Your data**.
-
 ## Configuration
 
 Everything is configured in the web interface. Environment variables are optional: they
@@ -193,8 +174,8 @@ only provide starting values, and anything saved in Settings wins. To use them, 
 
 Planned and wished-for improvements:
 
-- **Automatic backups**: scheduled backups, keeping the last N, and restoring from Settings,
-  so nothing is ever lost.
+- **Automatic backups**: scheduled backups with restore from Settings, and options to back up
+  to different places (a local folder, a NAS, cloud storage…), so nothing is ever lost.
 - **More AI providers**: OpenAI, Google Gemini directly, and **local models** (Ollama or any
   OpenAI-compatible server) so it can run with no cloud at all.
 - Voice messages in Telegram, a weekly summary, and more insights.
@@ -205,17 +186,12 @@ Have an idea? See below.
 
 Ideas, questions, bug reports and pull requests are all welcome:
 
-- 💡 **Have an idea or a question?** [Start a discussion](https://github.com/BVrabec/dayscore/discussions).
-- 🐞 **Found a bug?** [Open an issue](https://github.com/BVrabec/dayscore/issues/new/choose) and describe what happened.
+- 💡 **Have an idea or a question?** [Start a discussion](https://github.com/BVrabec/DayScore/discussions).
+- 🐞 **Found a bug?** [Open an issue](https://github.com/BVrabec/DayScore/issues/new/choose) and describe what happened.
 - 🛠️ **Want to add something yourself?** Fork the repo and open a pull request; see
   [CONTRIBUTING.md](CONTRIBUTING.md).
 
 If you use DayScore and like it, a ⭐ on the repo helps others find it.
-
-## Built with
-
-Python · FastAPI · SQLite · vanilla JavaScript with hand-made SVG charts (no frameworks) ·
-Docker. AI scoring through the Anthropic API or OpenRouter.
 
 ## License
 

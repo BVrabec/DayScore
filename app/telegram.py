@@ -10,6 +10,7 @@ import html
 import logging
 import os
 import secrets
+import time
 from datetime import date, timedelta
 
 import httpx2 as httpx
@@ -63,15 +64,23 @@ async def check_token(token: str) -> dict:
     return data["result"]
 
 
-MAX_LINK_ATTEMPTS = 5
+MAX_LINK_ATTEMPTS = 5      # wrong guesses before the code is replaced
+MAX_LINK_ROUNDS = 3        # replaced codes before linking pauses
+LINK_PAUSE_SECONDS = 3600
 _failed_links = 0
+_link_rounds = 0
+_link_paused_until = 0.0
 
 
-def new_link_code() -> str:
+def new_link_code(by_owner: bool = True) -> str:
     """A 6-digit code: sent automatically by the deep link, or typed to the bot by hand.
-    It's replaced after a few wrong guesses, so it can't be brute-forced."""
-    global _failed_links
+    It's replaced after a few wrong guesses, and linking pauses for an hour after several
+    replaced codes, so it can't be brute-forced. A new code made in Settings lifts the pause."""
+    global _failed_links, _link_rounds, _link_paused_until
     _failed_links = 0
+    if by_owner:
+        _link_rounds = 0
+        _link_paused_until = 0.0
     code = f"{secrets.randbelow(10**6):06d}"
     prefs.put("telegram_link_code", code)
     return code
@@ -264,8 +273,11 @@ async def _handle_callback(bot: Bot, cb: dict) -> None:
 async def _try_link(bot: Bot, msg: dict) -> None:
     """Before an account is linked, only the correct code does anything. It arrives either
     as `/start <code>` (from the deep link) or as a plain message (typed by hand)."""
-    global _failed_links
+    global _failed_links, _link_rounds, _link_paused_until
     chat_id = msg["chat"]["id"]
+    if time.time() < _link_paused_until:
+        await bot.send(chat_id, "Linking is paused for a while after too many wrong codes.")
+        return
     user = msg.get("from", {})
     text = (msg.get("text") or "").strip()
     parts = text.split()
@@ -287,8 +299,12 @@ async def _try_link(bot: Bot, msg: dict) -> None:
         _failed_links += 1
         log.info("Wrong link code from Telegram user %s (attempt %d)", user.get("id"), _failed_links)
         if _failed_links >= MAX_LINK_ATTEMPTS:
-            new_link_code()
+            new_link_code(by_owner=False)
+            _link_rounds += 1
             log.info("Too many wrong link codes - generated a new one")
+            if _link_rounds >= MAX_LINK_ROUNDS:
+                _link_paused_until = time.time() + LINK_PAUSE_SECONDS
+                log.warning("Telegram linking paused for an hour after repeated wrong codes")
     else:
         log.info("Link attempt without a code from Telegram user %s", user.get("id"))
     await bot.send(chat_id, "👋 To connect, send me the <b>6-digit code</b> shown in "

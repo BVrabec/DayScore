@@ -13,13 +13,18 @@ from . import db
 
 # key -> (environment variable, default)
 DEFAULTS = {
-    "ai_provider": ("AI_PROVIDER", "anthropic"),          # anthropic | openrouter
+    "ai_provider": ("AI_PROVIDER", "anthropic"),          # anthropic | openrouter | local
     "anthropic_api_key": ("ANTHROPIC_API_KEY", ""),
     "ai_model": ("AI_MODEL", "claude-haiku-4-5"),
     "openrouter_api_key": ("OPENROUTER_API_KEY", ""),
     "openrouter_model": ("OPENROUTER_MODEL", "anthropic/claude-haiku-4.5"),
+    "local_url": ("LOCAL_AI_URL", ""),                       # OpenAI-compatible server, e.g. Ollama
+    "local_api_key": ("LOCAL_AI_KEY", ""),                   # usually empty
+    "local_model": ("LOCAL_AI_MODEL", ""),
     "todoist_token": ("TODOIST_API_TOKEN", ""),
     "todoist_projects": ("TODOIST_PROJECTS", ""),           # comma-separated project IDs
+    "todoist_confirm": ("TODOIST_CONFIRM", "1"),            # ask before ticking tasks off
+    "todoist_create": ("TODOIST_CREATE", "1"),              # add tasks mentioned for later to the Inbox
     "telegram_token": ("TELEGRAM_BOT_TOKEN", ""),
     "telegram_user_id": ("TELEGRAM_ALLOWED_USER_ID", ""),
     "telegram_bot_username": (None, ""),
@@ -30,6 +35,7 @@ DEFAULTS = {
     "workdays": ("WORKDAYS", "0,1,2,3,4"),                    # Monday = 0 ... Sunday = 6
     "morning_reminder": ("MORNING_REMINDER", "09:00"),
     "evening_reminder": ("EVENING_REMINDER", "21:30"),
+    "weekly_summary": ("WEEKLY_SUMMARY", "1"),               # Sunday evening recap on Telegram
 }
 
 # Yearly costs assume one note a day (~2k tokens in, ~300 out).
@@ -38,6 +44,7 @@ MODELS = {
         "claude-haiku-4-5": "Claude Haiku 4.5 – recommended (about $1–2 a year)",
         "claude-sonnet-5-5": "Claude Sonnet 5.5 – a bit smarter (about $3 a year)",
     },
+    "local": {},   # whatever the server offers
     "openrouter": {
         "anthropic/claude-haiku-4.5": "Claude Haiku 4.5 – recommended (about $1–2 a year)",
         "anthropic/claude-sonnet-5.5": "Claude Sonnet 5.5 – a bit smarter (about $3 a year)",
@@ -46,11 +53,18 @@ MODELS = {
     },
 }
 
-AI_KEYS = {"anthropic": ("anthropic_api_key", "ai_model"), "openrouter": ("openrouter_api_key", "openrouter_model")}
+# Models that still accept a temperature (0 keeps their scores repeatable); newer ones refuse it.
+TEMPERATURE_MODELS = {"claude-haiku-4-5"}
+
+AI_KEYS = {"anthropic": ("anthropic_api_key", "ai_model"), "openrouter": ("openrouter_api_key", "openrouter_model"),
+           "local": ("local_api_key", "local_model")}
 
 
 def ai_configured() -> bool:
-    key_name, _ = AI_KEYS.get(get("ai_provider"), AI_KEYS["anthropic"])
+    provider = get("ai_provider")
+    if provider == "local":
+        return bool(get("local_url") and get("local_model"))
+    key_name, _ = AI_KEYS.get(provider, AI_KEYS["anthropic"])
     return bool(get(key_name))
 
 

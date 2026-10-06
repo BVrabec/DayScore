@@ -1,16 +1,16 @@
 """Todoist integration (API v1).
 
 - When a day is logged, open tasks from the chosen projects go into the AI prompt. Tasks
-  the AI says the note completed are closed in Todoist and recorded for that day.
-- A background sync records tasks you complete directly in Todoist, so History can show
-  everything finished on a day. Those are for display only; they don't change the score.
+  the AI says the note completed are suggested for confirmation (or ticked off right away if
+  confirmation is off); ticked-off tasks are recorded for that day.
+- Tasks the note explicitly asks for later are added to the Todoist Inbox.
 """
 
 import asyncio
 import json
 import logging
 import os
-from datetime import date, datetime, time, timedelta, timezone
+from datetime import date, datetime, timezone
 
 import httpx2 as httpx
 
@@ -20,7 +20,6 @@ log = logging.getLogger("dayscore.todoist")
 
 API = os.environ.get("TODOIST_API_URL", "https://api.todoist.com/api/v1").rstrip("/")
 MAX_TASKS_IN_PROMPT = 150
-SYNC_EVERY = 15 * 60
 
 
 class TodoistError(Exception):
@@ -38,7 +37,16 @@ def project_ids() -> list[str]:
 
 
 def enabled() -> bool:
+    """Matching finished tasks needs a token and at least one watched project."""
     return bool(token() and project_ids())
+
+
+def confirm_first() -> bool:
+    return prefs.get("todoist_confirm") != "0"
+
+
+def can_create() -> bool:
+    return bool(token()) and prefs.get("todoist_create") != "0"
 
 
 def project_names() -> dict[str, str]:
@@ -47,11 +55,11 @@ def project_names() -> dict[str, str]:
 
 # ---------- HTTP ----------
 
-async def _request(method: str, path: str, tok: str | None = None, **params) -> dict:
+async def _request(method: str, path: str, tok: str | None = None, body: dict | None = None, **params) -> dict:
     tok = tok or token()
     try:
         async with httpx.AsyncClient(timeout=20.0) as client:
-            resp = await client.request(method, f"{API}/{path}", params=params or None,
+            resp = await client.request(method, f"{API}/{path}", params=params or None, json=body,
                                         headers={"Authorization": f"Bearer {tok}"})
     except httpx.HTTPError as e:
         raise TodoistError("Couldn't reach Todoist.") from e
@@ -111,7 +119,9 @@ async def open_tasks(day: date) -> list[dict]:
         return []
     if not project_names():
         await fetch_projects()
+    # Skip tasks already ticked off or already suggested for this day (whatever the answer was).
     already = {row["task_id"] for row in db.todoist_for_day(day) if row["source"] == "dayscore"}
+    already |= db.suggested_task_ids(day)
     tasks = []
     for pid in project_ids():
         tasks += await _all("tasks", "results", project_id=pid)
@@ -132,13 +142,78 @@ def prompt_block(day: date, tasks: list[dict]) -> str:
     return "<todoist_open_tasks>\n" + "\n".join(lines) + "\n</todoist_open_tasks>"
 
 
-async def close_matched(day: date, ids: list[str], tasks: list[dict]) -> list[dict]:
-    """Close the tasks the AI matched (only real IDs from the list we gave it)."""
+def created_block(day: date) -> str:
+    """Tasks already created from this day's note, so an added note doesn't create them twice."""
+    items = db.created(day)
+    if not items:
+        return ""
+    return "<already_added_todos>\n" + "\n".join(f"- {c['content']}" for c in items) + "\n</already_added_todos>"
+
+
+def matched(ids: list[str], tasks: list[dict]) -> list[dict]:
+    """Only real IDs from the list the AI was given."""
     by_id = {t["id"]: t for t in tasks}
-    matched = [by_id[i] for i in dict.fromkeys(ids) if i in by_id]
+    return [by_id[i] for i in dict.fromkeys(ids) if i in by_id]
+
+
+def suggest(day: date, found: list[dict]) -> list[dict]:
+    """Remember matched tasks as suggestions that wait for the owner's OK."""
+    for task in found:
+        db.add_suggestion(day, task)
+    return db.suggestions(day, status="pending")
+
+
+async def decide(day: date, accept: list[int], reject: list[int]) -> dict:
+    """Tick off the accepted suggestions in Todoist; forget the rejected ones for this day."""
+    pending = {s["suggestion_id"]: s for s in db.suggestions(day, status="pending")}
+    internal = ("suggestion_id", "day", "status", "selected")
+    to_close = [{k: v for k, v in pending[i].items() if k not in internal} for i in accept if i in pending]
+    accepted_ids = [i for i in accept if i in pending]
+    results = await close_matched(day, [s["id"] for s in to_close], to_close)
+    for i in accepted_ids:
+        db.set_suggestion(i, status="accepted")
+    for i in reject:
+        if i in pending:
+            db.set_suggestion(i, status="rejected")
+    return {"closed": [r["content"] for r in results if r["ok"]],
+            "failed": [r["content"] for r in results if not r["ok"]],
+            "rejected": len([i for i in reject if i in pending])}
+
+
+async def create_todos(day: date, todos: list[dict]) -> list[dict]:
+    """Add tasks the note explicitly asked for to the Todoist Inbox (no project = Inbox)."""
+    seen = {c["content"].strip().lower() for c in db.created(day)}
+    made = []
+    for todo in todos:
+        content = (todo.get("content") or "").strip()[:500]
+        if not content or content.lower() in seen:
+            continue
+        due = (todo.get("due_date") or "").strip()
+        body = {"content": content}
+        if len(due) == 10 and due[4] == "-" and due[7] == "-":
+            body["due_date"] = due
+        else:
+            due = ""
+        try:
+            task = await _request("POST", "tasks", body=body)
+        except TodoistError as e:
+            log.warning("Couldn't add a task to Todoist: %s", e)
+            continue
+        db.add_created(day, task.get("id", ""), content, due)
+        seen.add(content.lower())
+        made.append({"content": content, "due": due})
+    if made:
+        log.info("Added %d task(s) to the Todoist Inbox", len(made))
+    return made
+
+
+async def close_matched(day: date, ids: list[str], tasks: list[dict]) -> list[dict]:
+    """Close the given tasks in Todoist and record them for the day. Each returned task has
+    "ok": whether Todoist accepted it."""
+    matched_tasks = matched(ids, tasks)
     now = datetime.now(timezone.utc).isoformat(timespec="seconds")
 
-    async def close(task: dict) -> None:
+    async def close(task: dict) -> dict:
         try:
             await _request("POST", f"tasks/{task['id']}/close")
             status = "done"
@@ -146,49 +221,9 @@ async def close_matched(day: date, ids: list[str], tasks: list[dict]) -> list[di
             log.warning("Couldn't close Todoist task %s: %s", task["id"], e)
             status = "failed"
         db.save_todoist_done(task["id"], day, now, "dayscore", status, task)
+        return {**task, "ok": status == "done"}
 
-    await asyncio.gather(*(close(t) for t in matched))
-    if matched:
-        log.info("Closed %d Todoist task(s) for %s", len(matched), day)
-    return matched
-
-
-# ---------- background sync of tasks completed in Todoist ----------
-
-async def sync(days: int = 30) -> int:
-    """Record tasks completed in the chosen projects during the last `days` days."""
-    if not enabled():
-        return 0
-    await fetch_projects()
-    tz = prefs.tz()
-    start = datetime.combine(datetime.now(tz).date() - timedelta(days=days), time.min, tz)
-    items = await _all("tasks/completed/by_completion_date", "items",
-                       since=start.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-                       until=datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"))
-    wanted = set(project_ids())
-    added = 0
-    for item in items:
-        if item.get("project_id") not in wanted or not item.get("completed_at"):
-            continue
-        completed = datetime.fromisoformat(item["completed_at"].replace("Z", "+00:00"))
-        if db.todoist_closed_by_dayscore_near(item["id"], completed):
-            continue  # DayScore closed it (maybe filed under yesterday's note) - don't list twice
-        day = completed.astimezone(tz).date()
-        added += db.save_todoist_done(item["id"], day, completed.isoformat(timespec="seconds"),
-                                      "todoist", "done", _snapshot(item), replace=False)
-    return added
-
-
-async def sync_loop() -> None:
-    while True:
-        try:
-            if enabled():
-                added = await sync(days=int(db.get_setting("todoist.sync_days", "30")))
-                db.set_setting("todoist.sync_days", "2")  # full month once, then just recent days
-                if added:
-                    log.info("Synced %d completed Todoist task(s)", added)
-        except TodoistError as e:
-            log.warning("Todoist sync failed: %s", e)
-        except Exception:
-            log.exception("Todoist sync crashed")
-        await asyncio.sleep(SYNC_EVERY)
+    results = await asyncio.gather(*(close(t) for t in matched_tasks))
+    if results:
+        log.info("Closed %d of %d Todoist task(s) for %s", sum(r["ok"] for r in results), len(results), day)
+    return list(results)

@@ -5,6 +5,14 @@ data/
 __pycache__/
 *.pyc
 NOTES.md
+CONVERSATION.md
 demo-data/
 scripts/__pycache__/
 .deploy-host
+.deploy-host-test
+tmp/
+tests/
+.pytest_cache/
+screenshots/
+guides/
+launch/

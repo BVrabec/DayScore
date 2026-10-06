@@ -1,14 +1,29 @@
 services:
   dayscore:
     build: .
+    # Or skip building and use the published image:
+    # image: ghcr.io/bvrabec/dayscore:latest
     restart: unless-stopped
     ports:
-      # Change the port with DAYSCORE_PORT=8080 docker compose up -d
+      # Change the port with DAYSCORE_PORT=8080 in .env
       - "${DAYSCORE_PORT:-8000}:8000"
+    environment:
+      # The key that encrypts your journal on disk. It lives in .env next to this file, outside
+      # the data volume, so a copy of the volume alone reveals nothing. Keep a copy of it in your
+      # password manager: without it the data can't be opened.
+      DAYSCORE_KEY: ${DAYSCORE_KEY:?Create the encryption key first, see Quick start in the README}
     volumes:
       - dayscore-data:/data
-    # Everything is set up in the browser (password, AI key, Telegram, Todoist).
-    # Optionally preset values with a .env file; see .env.example.
+    # Decrypted scratch copies (backups being made or checked) only ever live in RAM.
+    tmpfs:
+      - /tmp:size=256m,mode=1777
+    # Hardening: nothing outside /data and /tmp can be changed, and no extra privileges.
+    read_only: true
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    # Everything else is set up in the browser (password, AI, Telegram, Todoist, backups).
+    # Optionally preset values in .env; see .env.example.
     # env_file: .env
 
 volumes:

@@ -44,15 +44,24 @@ def check_password(password: str) -> bool:
     )
 
 
-def _secret() -> bytes:
-    """Signing key: a random file in the data folder, mixed with the current password and a
-    session epoch, so changing either logs out every other device."""
+def _base_secret() -> str:
+    """With a data key, signing comes from it (nothing on the volume can forge a session);
+    otherwise from a random file in the data folder."""
+    derived = db.subkey("session-signing")
+    if derived:
+        return derived.hex()
     path = settings.data_dir / "secret.key"
     if not path.exists():
         path.write_text(secrets.token_hex(32))
         path.chmod(0o600)
+    return path.read_text().strip()
+
+
+def _secret() -> bytes:
+    """Signing key, mixed with the current password and a session epoch, so changing either
+    logs out every other device."""
     material = (db.get_setting(HASH_KEY) or settings.app_password) + db.get_setting(EPOCH_KEY, "")
-    return hashlib.sha256((path.read_text().strip() + material).encode()).digest()
+    return hashlib.sha256((_base_secret() + material).encode()).digest()
 
 
 def end_other_sessions() -> None:
@@ -101,3 +110,51 @@ def is_logged_in(request: Request) -> bool:
 def require_login(request: Request) -> None:
     if not is_logged_in(request):
         raise HTTPException(status_code=401, detail="Not logged in")
+
+
+# ---------- unlock: sensitive settings need the password again (valid 10 minutes) ----------
+# Changing where data goes (AI provider, Telegram bot, Todoist, backup locations) can leak the
+# journal, so a stolen session cookie alone must not be enough.
+
+UNLOCK_COOKIE = "dayscore_unlock"
+UNLOCK_SECONDS = 10 * 60
+
+
+def make_unlock() -> str:
+    expires = str(int(time.time()) + UNLOCK_SECONDS)
+    return f"{expires}.{_sign('unlock:' + expires)}"
+
+
+def is_unlocked(request: Request) -> bool:
+    if settings.disable_auth:
+        return True
+    expires, _, signature = request.cookies.get(UNLOCK_COOKIE, "").partition(".")
+    if not expires.isdigit() or int(expires) < time.time():
+        return False
+    return hmac.compare_digest(signature, _sign("unlock:" + expires))
+
+
+def require_unlock(request: Request) -> None:
+    require_login(request)
+    if not is_unlocked(request):
+        raise HTTPException(status_code=403, detail="unlock")
+
+
+# ---------- setup code: only whoever can read the server logs can claim a new install ----------
+
+_setup_code = ""
+
+
+def setup_code() -> str:
+    """The one-time code for a brand-new install, printed in the container logs."""
+    global _setup_code
+    if not _setup_code:
+        alphabet = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
+        raw = "".join(secrets.choice(alphabet) for _ in range(8))
+        _setup_code = f"{raw[:4]}-{raw[4:]}"
+    return _setup_code
+
+
+def check_setup_code(code: str) -> bool:
+    norm = lambda c: c.upper().replace("-", "").replace(" ", "")
+    return bool(code) and hmac.compare_digest(norm(code).encode(), norm(setup_code()).encode())

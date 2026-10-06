@@ -18,5 +18,5 @@ body:
     id: logs
     attributes:
       label: Logs
-      description: Relevant lines from `docker compose logs`. Please remove API keys, tokens and anything personal.
+      description: Relevant lines from `docker compose logs`. Please remove API keys, tokens, your setup code and anything personal.
       render: text

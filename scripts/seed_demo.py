@@ -199,7 +199,7 @@ def main() -> None:
                 "deadline": "", "project_id": project, "project": project, "url": "https://app.todoist.com/app/today",
             }
             db.save_todoist_done(task_id, d, done_at.astimezone(timezone.utc).isoformat(timespec="seconds"),
-                                 rng.choice(["dayscore", "dayscore", "todoist"]), "done", snapshot)
+                                 "dayscore", "done", snapshot)
     print(f"Seeded {count} days (password: demo) into {db.settings.db_path}")
 
 

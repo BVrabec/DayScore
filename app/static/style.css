@@ -412,8 +412,8 @@ dialog::backdrop { background: rgba(0, 0, 0, 0.35); backdrop-filter: blur(2px); 
 .aurora { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
 /* Soft radial gradients instead of filter: blur() - same look, far cheaper to draw on phones. */
 .aurora i { position: absolute; width: 80vmax; height: 80vmax; border-radius: 50%; opacity: var(--aurora); will-change: transform; }
-.aurora i:nth-child(1) { background: radial-gradient(closest-side, #8b5cf6, transparent); top: -38vmax; left: -28vmax; animation: drift 24s ease-in-out infinite alternate; }
-.aurora i:nth-child(2) { background: radial-gradient(closest-side, #ec4899, transparent); bottom: -42vmax; right: -32vmax; animation: drift 28s ease-in-out infinite alternate-reverse; }
+.aurora i:nth-child(1) { background: radial-gradient(closest-side, var(--aurora-1, #8b5cf6), transparent); top: -38vmax; left: -28vmax; animation: drift 24s ease-in-out infinite alternate; }
+.aurora i:nth-child(2) { background: radial-gradient(closest-side, var(--aurora-2, #ec4899), transparent); bottom: -42vmax; right: -32vmax; animation: drift 28s ease-in-out infinite alternate-reverse; }
 @keyframes drift { to { transform: translate(8vmax, 6vmax) scale(1.1); } }
 .topbar, main, .login-page { position: relative; z-index: 1; }
 .topbar { z-index: 10; }
@@ -660,4 +660,170 @@ a.icon-btn:hover { text-decoration: none; }
 .rescore {
   display: inline-block; margin-bottom: 14px; padding: 6px 12px; border-radius: 999px;
   font-size: 13px; font-weight: 600; color: var(--accent); background: var(--accent-wash);
+}
+
+/* Todoist: suggested tasks waiting for confirmation */
+.suggest-box {
+  margin-top: 18px; padding: 14px; border-radius: 14px; display: grid; gap: 6px;
+  background: var(--accent-wash); border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+}
+.suggest-box > .hint { margin: 0 0 4px; }
+.suggest-box .row-btns { margin-top: 6px; }
+.td-options { margin-top: 16px; gap: 6px; }
+
+/* =====================================================================
+   Accent theme "green" (APP_ACCENT=green), e.g. for a test environment.
+   Same style as Orchid, emerald -> lime instead of violet -> pink.
+   ===================================================================== */
+:root[data-accent="green"] {
+  --accent: #059669;
+  --accent-hover: #047857;
+  --accent-soft: #d1fae5;
+  --accent-wash: rgba(5, 150, 105, 0.08);
+  --a1: #059669;
+  --a2: #65a30d;
+  --btn1: #059669;
+  --btn2: #4d7c0f;
+  --glow: rgba(5, 150, 105, 0.35);
+  --aurora-1: #10b981;
+  --aurora-2: #84cc16;
+  --heat-1: #d1fae5;
+  --heat-2: #6ee7b7;
+  --heat-3: #34d399;
+  --heat-4: #059669;
+  --heat-5: #065f46;
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-accent="green"]:where(:not([data-theme="light"])) {
+    --accent: #34d399;
+    --accent-hover: #6ee7b7;
+    --accent-soft: #064e3b;
+    --accent-wash: rgba(52, 211, 153, 0.10);
+    --a1: #34d399;
+    --a2: #a3e635;
+    --btn1: #059669;
+    --btn2: #4d7c0f;
+    --glow: rgba(52, 211, 153, 0.40);
+    --heat-1: #064e3b;
+    --heat-2: #065f46;
+    --heat-3: #047857;
+    --heat-4: #10b981;
+    --heat-5: #6ee7b7;
+  }
+}
+:root[data-accent="green"][data-theme="dark"] {
+  --accent: #34d399;
+  --accent-hover: #6ee7b7;
+  --accent-soft: #064e3b;
+  --accent-wash: rgba(52, 211, 153, 0.10);
+  --a1: #34d399;
+  --a2: #a3e635;
+  --btn1: #059669;
+  --btn2: #4d7c0f;
+  --glow: rgba(52, 211, 153, 0.40);
+  --heat-1: #064e3b;
+  --heat-2: #065f46;
+  --heat-3: #047857;
+  --heat-4: #10b981;
+  --heat-5: #6ee7b7;
+}
+/* Tint the violet/pink logo green. */
+:root[data-accent="green"] .brand img { filter: hue-rotate(-105deg) drop-shadow(0 4px 10px var(--glow)); }
+
+/* ---------- backups ---------- */
+.bk-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.bk-row select, .bk-row input[type=time] {
+  padding: 9px 12px; border-radius: 11px; border: 1px solid var(--border); background: var(--page); color: var(--text); font-size: 14px;
+}
+.bk-loc { border: 1px solid var(--border); border-radius: 12px; padding: 4px 10px; margin-top: 6px; }
+.bk-loc .bk-fields { display: none; gap: 10px; padding: 4px 4px 12px; }
+.bk-loc.on .bk-fields { display: grid; }
+.bk-loc.on { border-color: color-mix(in srgb, var(--accent) 35%, transparent); background: var(--accent-wash); }
+.bk-toggle { padding: 8px 2px; }
+.bk-fields textarea { min-height: 96px; font-family: ui-monospace, monospace; font-size: 13px; }
+.bk-fields .steps { margin: 6px 0 0; }
+.bk-section { border-top: 1px solid var(--border); margin-top: 18px; padding-top: 14px; display: grid; gap: 10px; }
+.bk-h { margin: 4px 0 0; font-size: 14px; }
+.bk-runs, .bk-files { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.bk-runs li { display: grid; gap: 4px; padding: 8px 10px; border-radius: 10px; background: var(--surface-2); font-size: 13px; }
+.bk-results { display: flex; flex-wrap: wrap; gap: 4px; }
+.bk-chip { font-size: 12px; padding: 2px 8px; border-radius: 999px; background: var(--page); }
+.bk-chip.ok { color: var(--good-text); }
+.bk-chip.bad { color: var(--bad-text); }
+.bk-files li { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 8px 10px; border-radius: 10px; background: var(--surface-2); font-size: 14px; }
+.bk-file { cursor: pointer; }
+.bk-preview { display: grid; gap: 2px; padding: 12px 14px; border-radius: 12px; background: var(--accent-wash); }
+.bk-preview b { font-size: 18px; }
+.bk-preview span { font-size: 13px; color: var(--text-2); }
+/* The login card stays put: lifting it under the cursor made its bottom edge flicker. */
+.login-card:hover { transform: none; }
+/* Buttons glow and shine on hover but don't move: a 1px lift made them flicker when the
+   cursor rested on their bottom edge. */
+.btn:hover { transform: none; }
+
+/* ---------- v1.22: mood, why-this-score, day actions, model marks ---------- */
+.mood-row, .mood-pick { display: flex; align-items: center; gap: 4px; margin-top: 14px; flex-wrap: wrap; }
+.mood-pick { margin: 10px 0 0; }
+.mood-row .hint, .mood-pick .hint { margin-right: 6px; }
+.mood-pick .opt { color: var(--muted); }
+.mood-row button, .mood-pick button {
+  font-size: 20px; line-height: 1; padding: 6px; border-radius: 10px; border: 1px solid transparent;
+  background: none; cursor: pointer; filter: grayscale(1); opacity: .55; transition: opacity .15s, filter .15s, background .15s;
+}
+.mood-row button:hover, .mood-pick button:hover { opacity: .9; filter: none; }
+.mood-row button.on, .mood-pick button.on { opacity: 1; filter: none; background: var(--accent-wash); border-color: var(--border); }
+.why { margin: 14px 0 0; font-size: 14px; color: var(--text-2); }
+.why summary { cursor: pointer; color: var(--accent); font-weight: 600; width: fit-content; }
+.why p { margin: 8px 0 0; line-height: 1.5; }
+.why .tip b { color: var(--text); }
+.day-actions { margin-top: 18px; justify-content: flex-end; }
+.btn.danger { color: var(--bad-text); }
+.model-mark { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 3 3; }
+.callout-inline { margin: 0 0 14px; padding: 10px 12px; border-radius: 12px; background: var(--accent-wash);
+  color: var(--text-2); font-size: 14px; line-height: 1.45; }
+.setup-code { display: grid; gap: 6px; text-align: left; }
+.setup-code .hint { font-size: 12px; }
+.version-note { text-align: center; color: var(--muted); font-size: 12px; margin: 8px 0 0; }
+.version-note a { color: inherit; }
+
+/* ---------- settings: side menu + one section at a time ---------- */
+.settings-layout { display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 28px; align-items: start;
+  max-width: 980px; margin: 0 auto; }
+.settings-nav { position: sticky; top: 84px; display: grid; gap: 14px; }
+.settings-nav h1 { margin: 0 0 2px 12px; font-size: 26px; letter-spacing: -0.02em; }
+.nav-list { display: grid; gap: 2px; position: relative; }
+.nav-list a {
+  display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 12px;
+  color: var(--text-2); text-decoration: none; font-size: 14.5px; font-weight: 500;
+  transition: background .15s, color .15s;
+}
+.nav-list a svg { width: 18px; height: 18px; flex: none; opacity: .8; }
+.nav-list a span { flex: 1; white-space: nowrap; }
+.nav-list a:hover { background: var(--surface-2); color: var(--text); }
+.nav-list a.active { background: var(--accent-wash); color: var(--text); font-weight: 650; }
+.nav-list a.active svg { color: var(--accent); opacity: 1; }
+.nav-list a:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.nav-dot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+.nav-dot.ok { background: #22a35a; }
+.nav-dot.warn { background: #e8a200; box-shadow: 0 0 0 3px rgba(232, 162, 0, .18); }
+.settings-body { display: grid; gap: 16px; max-width: 720px; min-width: 0; }
+.settings-body > * { min-width: 0; }
+.fade-in .settings-body > * { animation: fadeUp .45s var(--ease) both; }
+.fade-in .settings-body > *:nth-child(2) { animation-delay: .05s; }
+
+@media (max-width: 820px) {
+  .settings-layout { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .settings-nav { position: static; gap: 12px; }
+  .settings-nav h1 { margin-left: 0; }
+  /* On phones the menu is a row of tabs that scrolls sideways. */
+  .nav-list { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px;
+    scroll-snap-type: x proximity; }
+  .nav-list::-webkit-scrollbar { display: none; }
+  .nav-list a { flex: none; padding: 8px 12px; border: 1px solid var(--border); background: var(--surface);
+    scroll-snap-align: start; }
+  .nav-list a { gap: 8px; }
+  .nav-list a.active { border-color: transparent; }
+  .nav-list a span { flex: none; }
+  .nav-dot:not(.ok):not(.warn) { display: none; }
 }

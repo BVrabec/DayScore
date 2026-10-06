@@ -1,7 +1,7 @@
 # Direct dependencies. The exact versions (with hashes) the image installs are in
 # requirements.lock: regenerate it with
 #   pip-compile --generate-hashes --strip-extras -o requirements.lock requirements.txt
-fastapi>=0.141,<1
+fastapi>=0.142.2,<1
 uvicorn[standard]>=0.54,<1
 anthropic>=1.9,<2
 httpx2>=2.13,<3
